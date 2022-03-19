@@ -40,3 +40,15 @@
 .water {
     background-color: blue;
 }
+
+.path {
+    filter: brightness(0.1);
+}
+
+#buttons {
+    margin-bottom: 1em;
+}
+
+#buttons > * {
+    font-size: large;
+}

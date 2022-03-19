@@ -18,10 +18,10 @@ class TerrainTile {
 }
 
 class TerrainNode extends TerrainTile {
-    constructor(name, coordinates, movementMultiplier, dist) {
+    constructor(name, coordinates, movementMultiplier, dist, parent) {
         super(name, coordinates, movementMultiplier);
         this.dist = dist;
-        
+        this.parent = parent;
     }   
 }
 
@@ -36,6 +36,14 @@ function makeTileArray (dimension) {
         }
     }
     return tileArray;
+}
+
+function createNodes (tileArray) {
+    const nodes = [];
+    for (let tile of tileArray) {
+        nodes.push(new TerrainNode(tile.name, tile.coordinates, tile.movementMultiplier, 10000, null));
+    }
+    return nodes;
 }
 
 function populateBoard (tileArray) {
@@ -63,7 +71,7 @@ function changeToWater (coordinates, tileArray) {
     const [j, i] = coordinates;
     const dimension = Math.sqrt(tileArray.length);
     const elementIndex = (j * dimension + i);
-    tileArray[elementIndex] = new TerrainTile('water', [j, i], 0);
+    tileArray[elementIndex] = new TerrainTile('water', [i, j], 0);
 }
 
 function addBodiesOfWater (numberOfBodies) {
@@ -99,19 +107,71 @@ function makeStartAndEnd () {
     const end = choosePoint(possibleIndices);
     board.children[start].innerText = 'Start';
     board.children[end].innerText = 'End';
+    return [start, end];
 }
 
-function pathfind (startCoords, endCoords) {
+function retrace (nodeList, endNode) {
+    const retraced = [endNode];
+    while (endNode.parent) {
+        endNode = endNode.parent;
+        retraced.push(endNode);
+    }
+    return retraced;
+}
 
+function dijkstra (nodeList, start, end) {
+    const dimension = Math.sqrt(nodeList.length);
+    nodeList[start].dist = 0;
+    const unexplored = new Set(nodeList);
+    while (unexplored.size > 0) {
+        // Sets current node to the one with smallest dist value
+        let listByDist = [...unexplored].sort((a, b) => a.dist - b.dist);
+        let current = listByDist[0];
+        console.log(current.coordinates);
+        unexplored.delete(current);
+        if (nodeList.indexOf(current) === end) {
+            console.log("Got to the end");
+            console.log(current);
+            return retrace(nodeList, nodeList[end]);
+        }
+        const neighbourCoords = getNeighbourCoords(dimension, current.coordinates);
+        for (let nc of neighbourCoords) {
+            const neighbourNode = nodeList.find(n => n.coordinates[0] === nc[0] && n.coordinates[1] === nc[1]);
+            // Skips nodes that are either obstacles or were already explored
+            if (neighbourNode.name === 'water' || !unexplored.has(neighbourNode)) {
+                continue;
+            }
+            newDist = 1 / neighbourNode.movementMultiplier;
+            if (newDist < neighbourNode.dist) {
+                neighbourNode.dist = newDist;
+                neighbourNode.parent = current;
+            }
+        }
+    }
+    console.log('Hit a dead end or something');
+    return;
+}
 
+function pathfind (start, end) {
+    const grid = createNodes(tileArray);
+    const path = dijkstra(grid, start, end);
+    for (let node of path) {
+        const ind = grid.indexOf(node);
+        board.children[ind].classList.add('path');
+    }
 }
 
 const DIMENSION = 9;
 const board = document.querySelector('#game-board');
+const showPathButton = document.querySelector('#show-path');
+const regenerateButotn = document.querySelector('#regenerate');
 
 const tileArray = makeTileArray(DIMENSION);
 populateBoard(tileArray);
 addBodiesOfWater(Math.floor(DIMENSION / 2));
 
-makeStartAndEnd();
+const [start, end] = makeStartAndEnd();
+
+showPathButton.addEventListener('click', () => pathfind(start, end));
+regenerateButotn.addEventListener('click', () => window.location.reload());
 
