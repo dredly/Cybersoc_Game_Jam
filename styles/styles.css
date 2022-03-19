@@ -1,0 +1,42 @@
+#game-area {
+    display: grid;
+    width: 100%;
+    place-items: center;
+}
+
+#game-board {
+    display: grid;
+    width: 800px;
+    height: 800px;
+    background-color: black;
+}
+
+.tile {
+    aspect-ratio: 1/1;
+}
+
+
+/* Terrain classes */
+.forest {
+    background-color: rgb(7, 82, 7);
+}
+
+.mountain {
+    background-color: gray;
+}
+
+.desert {
+    background-color: yellow;
+}
+
+.swamp {
+    background-color: rgb(75, 69, 41);
+}
+
+.grasslands {
+    background-color: lightgreen;
+}
+
+.water {
+    background-color: blue;
+}
